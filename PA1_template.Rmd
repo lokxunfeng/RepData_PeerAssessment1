@@ -75,6 +75,7 @@ names(combine3)<-c("date","total_steps")
 head(combine3)
 hist(combine3$total_steps,col="green",xlab="Total Number of Steps",ylab="Frequency",main="Histogram of total steps each day")
 ```
+
 Now we calculate the mean and median of total number of steps taken per day.
 
 ```{r}

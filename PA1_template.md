@@ -162,6 +162,7 @@ hist(combine3$total_steps,col="green",xlab="Total Number of Steps",ylab="Frequen
 ```
 
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
+
 Now we calculate the mean and median of total number of steps taken per day.
 
 
