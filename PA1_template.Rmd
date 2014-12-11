@@ -1,25 +1,114 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+PA1_template.Rmd
+==================================
 
+##Loading and preprocessing the data
 
-## Loading and preprocessing the data
+```{r}
+oridata<-read.csv("activity.csv")
+oridata$date<-as.character(oridata$date)
+oridata$date<-as.Date(oridata$date)
+str(oridata)
+```
 
+Now we have a dataframe of the dataset with appropriate type for the analysis.
 
+##What is mean total of steps taken per day?
 
-## What is mean total number of steps taken per day?
+1. We first make a histogram of the total number of steps taken each day.
 
+```{r}
+data<-na.omit(oridata) #totally remove all cases whith NA
+combine<-aggregate(data$steps,by=list(data$date),FUN=sum,na.rm=TRUE)
+names(combine)<-c("date","total_steps")
+head(combine)
+hist(combine$total_steps,col="green",xlab="Total Number of Steps",ylab="Frequency",main="Histogram of total steps each day")
+```
 
+2. Now we calculate the mean and median of total number of steps taken per day.
 
-## What is the average daily activity pattern?
+```{r}
+mean<-mean(combine$total_steps,na.rm=TRUE)
+median<-median(combine$total_steps,na.rm=TRUE)
+```
 
+The mean is `r mean`.
+The median is `r median`.
 
+##What is the average daily activity pattern?
 
-## Imputing missing values
+```{r}
+combine2<-aggregate(data$steps,by=list(data$interval),FUN=mean,na.rm=TRUE)
+names(combine2)<-c("interval","average_steps")
+head(combine2)
+plot(combine2$interval,combine2$average_steps,type="l",main="Average Daily Activity Pattern",xlab="Time Interval",ylab="Average steps taken")
+maxtime<-combine2$interval[combine2$average_steps==max(combine2$average_steps)]
+print(maxtime)
+```
 
+Hence, the time interval which has maximum average number of steps is `r maxtime`.  
+Note: time interval in the format of *hmm* or *hhmm* in 24hrs time format.
 
+##Inputing missing values
+1. Calculate and report the total number of missing value.
+```{r}
+sum_na<-sum(is.na(oridata$steps))
+print(sum_na)
+```
+Total missing value is `r sum_na`.
 
-## Are there differences in activity patterns between weekdays and weekends?
+2. Filling the missing values with mean of that 5 minute interval, i.e. using values from previous step.
+```{r}
+data2<-oridata
+retrieve_time<-data2$interval[is.na(data2$steps)]
+rtimedf<-data.frame(index=1:length(retrieve_time),interval=retrieve_time)
+rmergedf<-merge(rtimedf,combine2)
+rmergedf<-rmergedf[order(rmergedf$index),]
+data2$steps[is.na(data2$steps)]<-rmergedf$average_steps
+sum(is.na(data2$steps))
+head(data2)
+```
+3. Now we have a new dataset with missing values filled in.
+4. Create a histogram of the total number of steps taken each day.
+```{r}
+combine3<-aggregate(data2$steps,by=list(data2$date),FUN=sum)
+names(combine3)<-c("date","total_steps")
+head(combine3)
+hist(combine3$total_steps,col="green",xlab="Total Number of Steps",ylab="Frequency",main="Histogram of total steps each day")
+```
+Now we calculate the mean and median of total number of steps taken per day.
+
+```{r}
+mean2<-mean(combine3$total_steps)
+median2<-median(combine3$total_steps)
+```
+
+The mean is `r mean2`. 
+The median is `r median2`.
+
+So compares the above two values with the previous values.
+Old mean = `r mean`. New mean = `r mean2`.  
+Old median = `r median`. New median = `r median2`.  
+We can see there are only slight difference in these values. Hence, the impact of inputing missing values is very small.
+
+##Are there differences in activity patterns between weekdays and weekends?
+
+We will use the new data set (with filled missing value).
+
+1. Create a new factor variable.
+```{r}
+data2<-cbind(data2,weekdays(data2$date))
+names(data2)[4]<-"day"
+levels(data2$day)<-c("weekday","weekday","weekend","weekend","weekday","weekday","weekday")
+table(data2$day)
+head(data2)
+```
+2. Make a panel plot.
+```{r}
+library(lattice)
+combine4<-aggregate(data2$steps,by=list(data2$interval,data2$day),FUN=mean)
+names(combine4)<-c("interval","day","average_steps")
+head(combine4)
+xyplot(combine4$average_steps ~ combine4$interval | combine4$day,layout=c(1,2), type="l",xlab="Interval",ylab="Average number of steps")
+```
+
+From the plot, we can see that there are differences on daily activities between weekends and weekdays. During weekend, the person is more active and the active period and intensity is more constant compared to during weekdays.
